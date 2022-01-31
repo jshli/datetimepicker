@@ -29,33 +29,37 @@
   return self;
 }
 
-RCT_NOT_IMPLEMENTED(- (instancetype)initWithCoder:(NSCoder *)aDecoder)
+CT_NOT_IMPLEMENTED(- (instancetype)initWithCoder:(NSCoder *)aDecoder)
+
+- (void)willMoveToSuperview:(UIView *)newSuperview
+{
+  [super willMoveToSuperview:newSuperview];
+  if ([self datePickerMode] == UIDatePickerModeCountDownTimer) {
+    [self resetDate];
+  }
+}
 
 - (void)didChange
 {
   if (_onChange) {
     _onChange(@{ @"timestamp": @(self.date.timeIntervalSince1970 * 1000.0) });
   }
+
+  if ([self datePickerMode] == UIDatePickerModeCountDownTimer) {
+    [self resetDate];
+  }
 }
 
 - (void)setDatePickerMode:(UIDatePickerMode)datePickerMode
-{
-  [super setDatePickerMode:datePickerMode];
-  // We need to set minuteInterval after setting datePickerMode, otherwise minuteInterval is invalid in time mode.
-  self.minuteInterval = _reactMinuteInterval;
-}
-
-- (void)setMinuteInterval:(NSInteger)minuteInterval
-{
-  [super setMinuteInterval:minuteInterval];
-  _reactMinuteInterval = minuteInterval;
-}
-
-- (void)setDate:(NSDate *)date {
-    // Need to avoid the case where values coming back through the bridge trigger a new valueChanged event
-    if (![self.date isEqualToDate:date]) {
-        [super setDate:date animated:NO];
+@@ -58,4 +70,11 @@ - (void)setDate:(NSDate *)date {
     }
+}
+
+- (void)resetDate
+{
+  NSDate *dateCopy = [[NSDate alloc] initWithTimeInterval:0 sinceDate:self.date];
+  [self setDate:[NSDate dateWithTimeIntervalSince1970:0]];
+  [self setDate:dateCopy animated:YES];
 }
 
 @end
